@@ -1,12 +1,11 @@
-# src/llm_guard/main.py
+# src/llm_guard/main.py (VERSÃO COM EXTRAÇÃO)
 
 import json
 import re
-from typing import Type, TypeVar
+from typing import Any, Type, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-# Define um tipo genérico para que o type hinting funcione bem
 T = TypeVar("T", bound="GuardSchema")
 
 class ParseError(Exception):
@@ -19,37 +18,56 @@ class GuardSchema(BaseModel):
     """
 
     @classmethod
-    def parse(cls: Type[T], text: str) -> T:
-        """
-        Analisa uma string de texto (potencialmente de um LLM), extrai
-        um bloco de JSON e o valida contra o schema da classe.
-
-        Args:
-            text: A string de texto a ser analisada.
-
-        Returns:
-            Uma instância da classe preenchida com os dados validados.
-
-        Raises:
-            ParseError: Se o JSON não for encontrado ou for inválido.
-        """
-        # 1. Tenta encontrar um bloco de JSON na string
-        # A regex busca por um texto que começa com '{' ou '[' e termina com '}' ou ']'
-        # O padrão `re.DOTALL` permite que '.' corresponda a quebras de linha.
+    def parse(cls: Type[T], text: str, llm_client: Any = None) -> T:
         match = re.search(r"\{.*\}|\[.*\]", text, re.DOTALL)
-
+        
+        # --- NOVA LÓGICA DE EXTRAÇÃO COMEÇA AQUI ---
         if not match:
-            raise ParseError("Nenhum bloco de JSON encontrado no texto fornecido.")
+            if not llm_client:
+                raise ParseError("Nenhum bloco de JSON encontrado e nenhum cliente LLM foi fornecido para extração.")
+            
+            # Se temos um cliente, tentamos a extração de texto puro
+            try:
+                extraction_prompt = f"""
+Extraia as informações do texto original para preencher um objeto JSON.
+O esquema JSON necessário é:
+{cls.model_json_schema()}
+
+Texto Original:
+"{text}"
+
+Responda APENAS com o objeto JSON válido.
+"""
+                response = llm_client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[{"role": "user", "content": extraction_prompt}],
+                    temperature=0.0,
+                )
+                json_string_from_extraction = response.choices[0].message.content
+                return cls.model_validate_json(json_string_from_extraction)
+            except Exception as e:
+                raise ParseError(f"Falha ao extrair e validar a partir do texto: {e}") from e
+        # --- FIM DA LÓGICA DE EXTRAÇÃO ---
 
         json_string = match.group(0)
 
-        # 2. Tenta validar o JSON encontrado com o Pydantic
         try:
-            # cls.model_validate_json() é o método moderno do Pydantic v2
             return cls.model_validate_json(json_string)
-        except ValidationError as e:
-            # Se o Pydantic falhar, levantamos nossa própria exceção
-            raise ParseError(f"O JSON extraído é inválido: {e}") from e
-        except json.JSONDecodeError as e:
-            # Se a string não for nem mesmo um JSON válido
-            raise ParseError(f"Falha ao decodificar o JSON: {e}") from e
+        except (ValidationError, json.JSONDecodeError):
+            if not llm_client:
+                raise ParseError("Falha ao validar o JSON e nenhum cliente LLM foi fornecido para reparo.")
+
+            try:
+                repair_prompt = f"""O JSON a seguir está quebrado ou malformado. Por favor, corrija a sintaxe e retorne APENAS o JSON corrigido, sem nenhum texto adicional.
+
+JSON Quebrado:
+{json_string}"""
+                response = llm_client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[{"role": "user", "content": repair_prompt}],
+                    temperature=0.0,
+                )
+                repaired_json_string = response.choices[0].message.content
+                return cls.model_validate_json(repaired_json_string)
+            except Exception as e:
+                raise ParseError(f"Falha ao reparar e validar o JSON: {e}") from e

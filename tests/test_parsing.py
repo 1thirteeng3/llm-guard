@@ -70,3 +70,31 @@ def test_falha_sem_llm_client_em_json_quebrado():
     texto_quebrado = '{"name": "Alice", "age": 30,}'
     with pytest.raises(ParseError, match="nenhum cliente LLM foi fornecido para reparo"):
         UserInfo.parse(texto_quebrado)
+# Adicione este novo teste em tests/test_parsing.py
+
+def test_extracao_de_dados_de_texto_puro():
+    """Testa se o LLM consegue extrair dados de um texto não estruturado."""
+    # 1. O texto puro que o LLM "real" retornaria
+    texto_puro = "O usuário se chama Bruno e tem 42 anos."
+
+    # 2. O JSON que esperamos que o LLM de extração nos dê
+    json_esperado = '{"name": "Bruno", "age": 42}'
+
+    # 3. Criamos um "mock" do cliente OpenAI
+    mock_client = Mock()
+    
+    # 4. Configuramos o mock para retornar a resposta esperada
+    mock_response = Mock()
+    mock_response.choices = [Mock()]
+    mock_response.choices[0].message = Mock()
+    mock_response.choices[0].message.content = json_esperado
+    mock_client.chat.completions.create.return_value = mock_response
+
+    # 5. Executamos o parse com o texto puro e o cliente mockado
+    user = UserInfo.parse(texto_puro, llm_client=mock_client)
+
+    # 6. Verificamos se o resultado está correto
+    assert user.name == "Bruno"
+    assert user.age == 42
+    # Verificamos se o método 'create' do nosso mock foi chamado uma vez
+    mock_client.chat.completions.create.assert_called_once()

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llm-guard"
-version = "0.1.0"
+version = "0.2.0" # Sugestão: Incrementar a versão para refletir a nova funcionalidade
 authors = [
     { name = "Seu Nome", email = "seu@email.com" },
 ]
@@ -27,6 +27,9 @@ dev = [
     "pytest",
     "ruff",
     "black",
+]
+openai = [
+    "openai>=1.0.0",
 ]
 
 [project.urls]
