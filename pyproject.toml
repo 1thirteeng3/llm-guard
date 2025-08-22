@@ -1,0 +1,28 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-guard"
+version = "0.1.0"
+authors = [
+  { name="Seu Nome", email="seu@email.com" },
+]
+description = "Uma biblioteca para validar e estruturar saídas de LLMs com a ajuda do Pydantic."
+readme = "README.md"
+requires-python = ">=3.8"
+# Adicione esta linha:
+dependencies = [
+    "pydantic",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/seu-usuario/llm-guard" # Atualize com sua URL
+Issues = "https://github.com/seu-usuario/llm-guard/issues"   # Atualize com sua URL

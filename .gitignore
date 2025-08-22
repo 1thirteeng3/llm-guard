@@ -1,0 +1,35 @@
+# Arquivo .gitignore
+
+# Ambiente Virtual
+venv/
+.venv/
+env/
+.env
+
+# Arquivos de cache e compilados do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Pastas de distribuição e build
+dist/
+build/
+*.egg-info/
+
+# Arquivos de IDEs e editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Arquivos de teste
+.pytest_cache/
+.coverage
+
+# Arquivos de dependências (se usar pip-tools)
+*.in
+*.txt
+
+# Logs
+*.log
