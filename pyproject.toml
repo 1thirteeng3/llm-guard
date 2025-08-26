@@ -33,6 +33,10 @@ openai = [
     "openai>=1.0.0",
 ]
 
+docs = [
+    "mkdocs",
+    "mkdocs-material", # O tema que vamos usar
+]
 [project.urls]
 Homepage = "https://github.com/thirteeng/llm-guard"
 Issues = "https://github.com/thirteeng/llm-guard/issues"

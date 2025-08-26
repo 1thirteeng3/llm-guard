@@ -1,0 +1,31 @@
+# mkdocs.yml
+
+site_name: LLM-Guard
+site_description: "Validação e estruturação de saídas de LLMs com a simplicidade do Pydantic."
+site_author: "Thirteeng"
+
+repo_url: https://github.com/thirteeng/llm-guard # Link para o seu repositório
+repo_name: thirteeng/llm-guard
+
+theme:
+  name: material
+  palette:
+    # Para modo claro e escuro automático
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Mudar para o modo escuro
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Mudar para o modo claro
+  features:
+    - content.code.copy # Adiciona botão de copiar aos blocos de código
+    - navigation.tabs # Melhora a navegação
+    - navigation.top # Adiciona um botão de "voltar ao topo"
+
+# Estrutura de Navegação do Site
+nav:
+  - 'Home': 'index.md'
+  - 'Instalação': 'installation.md'
+  - 'Guia de Início Rápido': 'quickstart.md'
