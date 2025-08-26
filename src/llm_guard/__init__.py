@@ -1,5 +1,4 @@
 # src/llm_guard/__init__.py
+from .main import GuardSchema, ParseError, ExtractionError, RepairError
 
-from .main import GuardSchema, ParseError
-
-__version__ = "0.1.0"
+__version__ = "0.3.0" 

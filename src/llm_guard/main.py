@@ -1,4 +1,4 @@
-# src/llm_guard/main.py (VERSÃO COM CONFIGURAÇÃO)
+# src/llm_guard/main.py (VERSÃO COM ERROS ESPECÍFICOS)
 
 import json
 import re
@@ -6,26 +6,30 @@ from typing import Any, Type, TypeVar, Dict
 
 from pydantic import BaseModel, ValidationError
 
-# Adicionado Dict ao import
 T = TypeVar("T", bound="GuardSchema")
 
 class ParseError(Exception):
-    """Exceção customizada para erros durante o parsing da saída do LLM."""
+    """Exceção base para todos os erros de parsing do LLM-Guard."""
     pass
+
+# --- MUDANÇA 1: Novas classes de erro específicas ---
+class ExtractionError(ParseError):
+    """Levantado quando a extração de dados de texto puro falha."""
+    pass
+
+class RepairError(ParseError):
+    """Levantado quando o reparo de um JSON quebrado falha."""
+    pass
+# --- FIM DA MUDANÇA 1 ---
 
 class GuardSchema(BaseModel):
     """
     Classe base que herda de pydantic.BaseModel e adiciona o método .parse().
     """
-
     @classmethod
     def parse(cls: Type[T], text: str, llm_client: Any = None, llm_config: Dict[str, Any] = None) -> T:
-        # --- MUDANÇA 1: Adicionado o argumento 'llm_config' na assinatura acima ---
-
-        # --- MUDANÇA 2: Lógica para mesclar configurações ---
         default_config = {"model": "gpt-3.5-turbo", "temperature": 0.0}
         if llm_config:
-            # Sobrescreve os padrões com a configuração do usuário
             default_config.update(llm_config)
         final_config = default_config
         
@@ -46,7 +50,6 @@ Texto Original:
 
 Responda APENAS com o objeto JSON válido.
 """
-                # --- MUDANÇA 3: Usando a configuração final na chamada da API ---
                 response = llm_client.chat.completions.create(
                     messages=[{"role": "user", "content": extraction_prompt}],
                     **final_config
@@ -54,7 +57,8 @@ Responda APENAS com o objeto JSON válido.
                 json_string_from_extraction = response.choices[0].message.content
                 return cls.model_validate_json(json_string_from_extraction)
             except Exception as e:
-                raise ParseError(f"Falha ao extrair e validar a partir do texto: {e}") from e
+                # --- MUDANÇA 2: Usando a exceção específica ---
+                raise ExtractionError(f"Falha ao extrair e validar a partir do texto: {e}") from e
 
         json_string = match.group(0)
 
@@ -69,7 +73,6 @@ Responda APENAS com o objeto JSON válido.
 
 JSON Quebrado:
 {json_string}"""
-                # --- MUDANÇA 4: Usando a configuração final na chamada da API ---
                 response = llm_client.chat.completions.create(
                     messages=[{"role": "user", "content": repair_prompt}],
                     **final_config
@@ -77,4 +80,5 @@ JSON Quebrado:
                 repaired_json_string = response.choices[0].message.content
                 return cls.model_validate_json(repaired_json_string)
             except Exception as e:
-                raise ParseError(f"Falha ao reparar e validar o JSON: {e}") from e
+                # --- MUDANÇA 3: Usando a exceção específica ---
+                raise RepairError(f"Falha ao reparar e validar o JSON: {e}") from e
