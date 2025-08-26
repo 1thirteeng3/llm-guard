@@ -1,11 +1,12 @@
-# src/llm_guard/main.py (VERSÃO COM EXTRAÇÃO)
+# src/llm_guard/main.py (VERSÃO COM CONFIGURAÇÃO)
 
 import json
 import re
-from typing import Any, Type, TypeVar
+from typing import Any, Type, TypeVar, Dict
 
 from pydantic import BaseModel, ValidationError
 
+# Adicionado Dict ao import
 T = TypeVar("T", bound="GuardSchema")
 
 class ParseError(Exception):
@@ -18,15 +19,22 @@ class GuardSchema(BaseModel):
     """
 
     @classmethod
-    def parse(cls: Type[T], text: str, llm_client: Any = None) -> T:
+    def parse(cls: Type[T], text: str, llm_client: Any = None, llm_config: Dict[str, Any] = None) -> T:
+        # --- MUDANÇA 1: Adicionado o argumento 'llm_config' na assinatura acima ---
+
+        # --- MUDANÇA 2: Lógica para mesclar configurações ---
+        default_config = {"model": "gpt-3.5-turbo", "temperature": 0.0}
+        if llm_config:
+            # Sobrescreve os padrões com a configuração do usuário
+            default_config.update(llm_config)
+        final_config = default_config
+        
         match = re.search(r"\{.*\}|\[.*\]", text, re.DOTALL)
         
-        # --- NOVA LÓGICA DE EXTRAÇÃO COMEÇA AQUI ---
         if not match:
             if not llm_client:
                 raise ParseError("Nenhum bloco de JSON encontrado e nenhum cliente LLM foi fornecido para extração.")
             
-            # Se temos um cliente, tentamos a extração de texto puro
             try:
                 extraction_prompt = f"""
 Extraia as informações do texto original para preencher um objeto JSON.
@@ -38,16 +46,15 @@ Texto Original:
 
 Responda APENAS com o objeto JSON válido.
 """
+                # --- MUDANÇA 3: Usando a configuração final na chamada da API ---
                 response = llm_client.chat.completions.create(
-                    model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": extraction_prompt}],
-                    temperature=0.0,
+                    **final_config
                 )
                 json_string_from_extraction = response.choices[0].message.content
                 return cls.model_validate_json(json_string_from_extraction)
             except Exception as e:
                 raise ParseError(f"Falha ao extrair e validar a partir do texto: {e}") from e
-        # --- FIM DA LÓGICA DE EXTRAÇÃO ---
 
         json_string = match.group(0)
 
@@ -62,10 +69,10 @@ Responda APENAS com o objeto JSON válido.
 
 JSON Quebrado:
 {json_string}"""
+                # --- MUDANÇA 4: Usando a configuração final na chamada da API ---
                 response = llm_client.chat.completions.create(
-                    model="gpt-3.5-turbo",
                     messages=[{"role": "user", "content": repair_prompt}],
-                    temperature=0.0,
+                    **final_config
                 )
                 repaired_json_string = response.choices[0].message.content
                 return cls.model_validate_json(repaired_json_string)

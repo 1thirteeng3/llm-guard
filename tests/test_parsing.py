@@ -1,100 +1,134 @@
-# tests/test_parsing.py
+# tests/test_parsing.py (VERSÃO FINAL CORRIGIDA)
 
 import pytest
 from llm_guard import GuardSchema, ParseError
+from unittest.mock import Mock
 
-# 1. Define um schema de teste
 class UserInfo(GuardSchema):
     name: str
     age: int
 
-# 2. Cria os casos de teste
+# Testes do MVP (não precisam de mock)
 def test_parse_com_json_limpo():
-    """Testa se o parsing funciona com um JSON perfeito."""
     text = '{"name": "Alice", "age": 30}'
     user = UserInfo.parse(text)
     assert user.name == "Alice"
     assert user.age == 30
 
 def test_parse_com_json_cercado_de_texto():
-    """Testa se a biblioteca extrai o JSON corretamente de uma string maior."""
-    text = "Aqui estão os dados do usuário: ```json\n{\"name\": \"Bob\", \"age\": 25}\n```. Espero que ajude!"
+    text = "Aqui estão os dados: ```json\n{\"name\": \"Bob\", \"age\": 25}\n```."
     user = UserInfo.parse(text)
     assert user.name == "Bob"
     assert user.age == 25
 
-def test_falha_quando_nao_ha_json():
-    """Testa se ParseError é levantado quando não há JSON."""
+def test_falha_quando_nao_ha_json_sem_cliente():
     text = "Não há dados aqui."
     with pytest.raises(ParseError, match="Nenhum bloco de JSON encontrado"):
         UserInfo.parse(text)
 
-def test_falha_com_tipo_invalido():
-    """Testa se ParseError é levantado para tipos de dados incorretos."""
-    text = '{"name": "Charlie", "age": "vinte"}' # age deveria ser int
-    # ATUALIZE A MENSAGEM ESPERADA AQUI
+def test_falha_com_tipo_invalido_sem_cliente():
+    text = '{"name": "Charlie", "age": "vinte"}'
     with pytest.raises(ParseError, match="Falha ao validar o JSON e nenhum cliente LLM foi fornecido para reparo."):
         UserInfo.parse(text)
-# Adicione esta importação no início do arquivo
-from unittest.mock import Mock
 
-def test_reparo_de_json_com_virgula_sobrando():
-    """Testa se o LLM consegue corrigir um JSON com uma vírgula a mais."""
-    # 1. O JSON quebrado que o LLM "real" retornaria
-    texto_quebrado = '{"name": "Alice", "age": 30,}' # Vírgula extra no final
-
-    # 2. O JSON corrigido que esperamos que o LLM de reparo nos dê
+# --- MUDANÇAS ABAIXO ---
+# Testes da Fase 2 com mock
+def test_reparo_de_json_com_virgula_sobrando(repair_prompt_fixture): # Fixture injetada aqui
+    texto_quebrado = '{"name": "Alice", "age": 30,}'
     texto_corrigido = '{"name": "Alice", "age": 30}'
-
-    # 3. Criamos um "mock" do cliente OpenAI
     mock_client = Mock()
-    
-    # 4. Configuramos o mock para retornar a resposta corrigida quando for chamado
     mock_response = Mock()
     mock_response.choices = [Mock()]
     mock_response.choices[0].message = Mock()
     mock_response.choices[0].message.content = texto_corrigido
     mock_client.chat.completions.create.return_value = mock_response
-
-    # 5. Executamos o parse com o JSON quebrado e o cliente mockado
+    
     user = UserInfo.parse(texto_quebrado, llm_client=mock_client)
-
-    # 6. Verificamos se o resultado está correto
+    
     assert user.name == "Alice"
     assert user.age == 30
-    # Verificamos se o método 'create' do nosso mock foi chamado uma vez
-    mock_client.chat.completions.create.assert_called_once()
+    mock_client.chat.completions.create.assert_called_once_with(
+        messages=[{"role": "user", "content": repair_prompt_fixture}], # Usando a variável
+        model="gpt-3.5-turbo",
+        temperature=0.0
+    )
 
-def test_falha_sem_llm_client_em_json_quebrado():
-    """Testa se o parse falha em um JSON quebrado quando não há cliente."""
-    texto_quebrado = '{"name": "Alice", "age": 30,}'
-    with pytest.raises(ParseError, match="nenhum cliente LLM foi fornecido para reparo"):
-        UserInfo.parse(texto_quebrado)
-# Adicione este novo teste em tests/test_parsing.py
-
-def test_extracao_de_dados_de_texto_puro():
-    """Testa se o LLM consegue extrair dados de um texto não estruturado."""
-    # 1. O texto puro que o LLM "real" retornaria
+def test_extracao_de_dados_de_texto_puro(extraction_prompt_fixture): # Fixture injetada aqui
     texto_puro = "O usuário se chama Bruno e tem 42 anos."
-
-    # 2. O JSON que esperamos que o LLM de extração nos dê
     json_esperado = '{"name": "Bruno", "age": 42}'
-
-    # 3. Criamos um "mock" do cliente OpenAI
     mock_client = Mock()
-    
-    # 4. Configuramos o mock para retornar a resposta esperada
     mock_response = Mock()
     mock_response.choices = [Mock()]
     mock_response.choices[0].message = Mock()
     mock_response.choices[0].message.content = json_esperado
     mock_client.chat.completions.create.return_value = mock_response
 
-    # 5. Executamos o parse com o texto puro e o cliente mockado
     user = UserInfo.parse(texto_puro, llm_client=mock_client)
 
-    # 6. Verificamos se o resultado está correto
     assert user.name == "Bruno"
     assert user.age == 42
-    # Verificamos se o método 'create' do nosso mock foi chamado uma vez
-    mock_client.chat.completions.create.assert_called_once()
+    mock_client.chat.completions.create.assert_called_once_with(
+        messages=[{"role": "user", "content": extraction_prompt_fixture}], # Usando a variável
+        model="gpt-3.5-turbo",
+        temperature=0.0
+    )
+
+def test_configuracao_do_llm_e_passada_corretamente(extraction_prompt_fixture_carlos): # Fixture injetada aqui
+    texto_puro = "O usuário se chama Carlos e tem 50 anos."
+    json_esperado = '{"name": "Carlos", "age": 50}'
+    custom_config = {"model": "gpt-4o", "temperature": 0.8}
+    mock_client = Mock()
+    mock_response = Mock()
+    mock_response.choices = [Mock()]
+    mock_response.choices[0].message = Mock()
+    mock_response.choices[0].message.content = json_esperado
+    mock_client.chat.completions.create.return_value = mock_response
+
+    user = UserInfo.parse(texto_puro, llm_client=mock_client, llm_config=custom_config)
+
+    assert user.name == "Carlos"
+    assert user.age == 50
+    mock_client.chat.completions.create.assert_called_once_with(
+        messages=[{"role": "user", "content": extraction_prompt_fixture_carlos}], # Usando a variável
+        model="gpt-4o",
+        temperature=0.8
+    )
+
+# Fixtures para gerar os prompts esperados nos testes (sem alterações aqui)
+@pytest.fixture
+def repair_prompt_fixture():
+    json_quebrado = '{"name": "Alice", "age": 30,}'
+    return f"""O JSON a seguir está quebrado ou malformado. Por favor, corrija a sintaxe e retorne APENAS o JSON corrigido, sem nenhum texto adicional.
+
+JSON Quebrado:
+{json_quebrado}"""
+
+@pytest.fixture
+def extraction_prompt_fixture():
+    texto_original = "O usuário se chama Bruno e tem 42 anos."
+    schema_json = UserInfo.model_json_schema()
+    return f"""
+Extraia as informações do texto original para preencher um objeto JSON.
+O esquema JSON necessário é:
+{schema_json}
+
+Texto Original:
+"{texto_original}"
+
+Responda APENAS com o objeto JSON válido.
+"""
+
+@pytest.fixture
+def extraction_prompt_fixture_carlos():
+    texto_original = "O usuário se chama Carlos e tem 50 anos."
+    schema_json = UserInfo.model_json_schema()
+    return f"""
+Extraia as informações do texto original para preencher um objeto JSON.
+O esquema JSON necessário é:
+{schema_json}
+
+Texto Original:
+"{texto_original}"
+
+Responda APENAS com o objeto JSON válido.
+"""
