@@ -33,3 +33,6 @@ build/
 
 # Logs
 *.log
+
+# Pasta de build da documentação
+/site
