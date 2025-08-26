@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llm-guard"
-version = "1.0.0" # <-- ATUALIZADO PARA A PRIMEIRA VERSÃO ESTÁVEL!
+version = "1.0.1" 
 
 # === AÇÃO NECESSÁRIA: ATUALIZE SEUS DADOS ABAIXO ===
 authors = [
