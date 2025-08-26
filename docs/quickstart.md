@@ -1,38 +1,37 @@
-# Guia de Início Rápido
+# Quick Start Guide
 
-Vamos ver como o `LLM-Guard` pode extrair dados estruturados de um simples texto.
+Let's see how `py-llm-shield` can extract structured data from simple text.
 
-Primeiro, certifique-se de que sua chave da API da OpenAI está configurada como uma variável de ambiente:
+First, make sure your OpenAI API key is set as an environment variable:
 ```bash
-export OPENAI_API_KEY="sua_chave_aqui"
+export OPENAI_API_KEY="your_key_here"
+Now, let's get to the code:
 
-Agora, vamos ao código:
-from llm_guard import GuardSchema
+from py_llm_shield import GuardSchema
 from openai import OpenAI
 
-# 1. Defina o schema dos dados que você espera
-class Usuario(GuardSchema):
-    nome: str
-    idade: int
-    cidade: str
+# 1. Define the schema of the data you expect
+class User(GuardSchema):
+name: str
+age: int
+city: str
 
-# 2. Inicialize o cliente da OpenAI
-cliente_openai = OpenAI()
+# 2. Initialize the OpenAI client
+openai_client = OpenAI()
 
-# 3. Forneça um texto não estruturado
-texto_puro = "O cliente se chama Ana, ela tem 35 anos e mora no Rio de Janeiro."
+# 3. Provide unstructured text
+pure_text = "The client's name is Ana, she is 35 years old and lives in Rio de Janeiro."
 
-# 4. Use o LLM-Guard para extrair e validar!
-try:
-    usuario_validado = Usuario.parse(
-        texto_puro,
-        llm_client=cliente_openai
-    )
-    print(usuario_validado)
-    # Saída esperada:
-    # nome='Ana' idade=35 cidade='Rio de Janeiro'
+# 4. Use py-llm-shield to extract and validate! try:
+validated_user = User.parse(
+plain_text,
+llm_client = client_openai
+)
+print(validated_user)
+# Expected output:
+# name = 'Ana' age = 35 city = 'Rio de Janeiro'
 
-    print(f"Nome: {usuario_validado.nome}, Idade: {usuario_validado.idade}")
+print(f"Name: {validated_user.name}, Age: {validated_user.age}")
 
 except Exception as e:
-    print(f"Ocorreu um erro: {e}")
+print(f"An error occurred: {e}")

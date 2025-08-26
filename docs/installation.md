@@ -1,12 +1,11 @@
-# Instalação
+# Installation
 
-A maneira mais fácil de instalar o `LLM-Guard` é através do `pip`.
+The easiest way to install `py-llm-shield` is through `pip`.
 
 ```bash
-pip install llm-guard
+pip install py-llm-shield
 
-# Funcionalidades Inteligentes
+Smart Features
+To use the repair and extraction features that depend on an LLM (such as OpenAI's), you need to install the optional dependencies.
 
-Para usar as funcionalidades de reparo e extração que dependem de um LLM (como o da OpenAI), você precisa instalar as dependências opcionais.
-
-pip install "llm-guard[openai]"
+pip install "py-llm-shield[openai]"

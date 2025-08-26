@@ -1,16 +1,17 @@
 # mkdocs.yml
 
-site_name: LLM-Guard
+site_name: py-llm-shield # <-- ATUALIZADO
 site_description: "Validação e estruturação de saídas de LLMs com a simplicidade do Pydantic."
-site_author: "Thirteeng"
+site_author: "Giovanni Lemos Barcelos" # <-- ATUALIZADO
 
-repo_url: https://github.com/thirteeng/llm-guard # Link para o seu repositório
+# Nota: O nome do repositório no GitHub pode continuar sendo 'llm-guard'.
+# Se você decidir renomeá-lo no GitHub, atualize a URL aqui.
+repo_url: https://github.com/thirteeng/llm-guard
 repo_name: thirteeng/llm-guard
 
 theme:
   name: material
   palette:
-    # Para modo claro e escuro automático
     - scheme: default
       toggle:
         icon: material/brightness-7
@@ -20,11 +21,10 @@ theme:
         icon: material/brightness-4
         name: Mudar para o modo claro
   features:
-    - content.code.copy # Adiciona botão de copiar aos blocos de código
-    - navigation.tabs # Melhora a navegação
-    - navigation.top # Adiciona um botão de "voltar ao topo"
+    - content.code.copy
+    - navigation.tabs
+    - navigation.top
 
-# Estrutura de Navegação do Site
 nav:
   - 'Home': 'index.md'
   - 'Instalação': 'installation.md'

@@ -1,12 +1,11 @@
-# Bem-vindo ao LLM-Guard
+# 🛡️ Welcome to py-llm-shield
 
-**LLM-Guard** é uma biblioteca Python projetada para tornar as interações com Modelos de Linguagem Grandes (LLMs) mais robustas, confiáveis e estruturadas.
+**py-llm-shield** is a Python library designed to make interactions with Large Language Models (LLMs) more robust, reliable, and structured.
 
-Usando o poder e a simplicidade do Pydantic, o `LLM-Guard` permite que você defina esquemas de dados e garanta que a saída de um LLM se ajuste a esses esquemas, mesmo que a saída seja um texto não estruturado ou um JSON malformado.
+Using the power and simplicity of Pydantic, `py-llm-shield` allows you to define data schemas and ensure that the output of an LLM conforms to those schemas, even if the output is unstructured text or malformed JSON.
 
-### Principais Funcionalidades
+### Main Features
 
-* ✅ **Validação Robusta:** Defina a estrutura de dados esperada usando classes Pydantic.
-* 🛠️ **Reparo Automático:** Corrige automaticamente JSONs com erros de sintaxe.
-* 🔎 **Extração Inteligente:** Extrai dados estruturados a partir de texto puro.
-* ⚙️ **Configurável:** Permite que você escolha o modelo de IA e os parâmetros para as operações de reparo e extração.
+* ✅ **Robust Validation:** Define the expected data structure using Pydantic classes.
+* 🛠️ **Automatic Repair:** Automatically fixes JSONs with syntax errors.
+* 🔎 **Smart Extraction:** Extracts structured data from plain text. * ⚙️ **Configurable:** Allows you to choose the AI ​​model and parameters for repair and extraction operations.
